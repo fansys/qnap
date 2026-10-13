@@ -138,10 +138,14 @@ def write_repo_feeds(
 ) -> tuple[Path, Path]:
     """Write repo.xml and repo_pre.xml via registered providers."""
     config = load_config()
+    # "none" from Actions means no preset override (use env / config.json).
+    preset = None if (accelerate_preset or "").strip().lower() in {"", "none"} else accelerate_preset
     effective_prefix = accelerate_prefix if accelerate_prefix is not None else base_url
+    if isinstance(effective_prefix, str) and effective_prefix.strip() == "":
+        effective_prefix = None
     prefix = resolve_accelerate_prefix(
         config=config,
-        preset=accelerate_preset,
+        preset=preset,
         prefix=effective_prefix,
         enabled=accelerate_enabled,
     )

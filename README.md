@@ -8,8 +8,8 @@ QNAP App Center 软件源。
 | Workflow | 触发 | 说明 |
 |---|---|---|
 | `sync-qnap-repo.yml` | 定时 + 手动 | Emby / Tailscale **并行**，再统一写 feed |
-| `sync-emby.yml` | 仅手动 | 只构建 Emby，可指定 `version` |
-| `sync-tailscale.yml` | 仅手动 | 只镜像 Tailscale，可指定 `version` |
+| `sync-emby.yml` | 仅手动 | 只构建 Emby；可指定 `version` / `force` |
+| `sync-tailscale.yml` | 仅手动 | 只镜像 Tailscale；可指定 `version` / `force` |
 
 ```text
 # 定时 / 全量手动
@@ -27,8 +27,8 @@ Sync Xxx  →  Update repo feeds
 ## CLI
 
 ```bash
-python3 sync_release.py emby --repo <owner>/<name> --version 4.10.1.0 --dry-run
-python3 sync_release.py tailscale --repo <owner>/<name> --version 1.92.3 --dry-run
+python3 sync_release.py emby --repo <owner>/<name> --version 4.10.1.0 --force --dry-run
+python3 sync_release.py tailscale --repo <owner>/<name> --version 1.92.3 --force --dry-run
 python3 sync_release.py feeds --repo <owner>/<name>
 python3 sync_release.py all --repo <owner>/<name> --dry-run   # 本地串行便捷入口
 ```
@@ -67,9 +67,18 @@ https://ghproxy.net/https://raw.githubusercontent.com/<owner>/<repo>/<ref>/asset
 覆盖方式（优先级从高到低）：
 
 1. CLI `--accelerate-prefix` / `--base-url`
-2. 环境变量 `FEED_ACCELERATE_PREFIX` / `FEED_ACCELERATE_PRESET`
-3. Actions 输入 `accelerate_preset`
-4. `config.json`
+2. 环境变量 / Actions Variable `FEED_ACCELERATE_PREFIX`
+3. CLI / Actions 输入 `accelerate_preset`（**`none` = 不覆盖**，继续用 env / config.json）
+4. 环境变量 / Actions Variable `FEED_ACCELERATE_PRESET`
+5. `config.json`
+
+GitHub Actions 里请在仓库 **Settings → Secrets and variables → Actions → Variables** 配置：
+
+- `FEED_ACCELERATE_PREFIX`：例如 `https://ghproxy.net/`
+- `FEED_ACCELERATE_PRESET`：可选，如 `ghfast`
+- `FEED_ACCELERATE_ENABLED`：可选，`true` / `false`
+
+手动运行参数 `accelerate_preset` 默认 `none` 表示「用上面的 Variable / config.json」，不会清空加速前缀。
 
 新增软件源应用：实现 `FeedProvider` 并在 `config.json` → `feed.providers` 注册名称（见 `ci/providers.py`）。
 

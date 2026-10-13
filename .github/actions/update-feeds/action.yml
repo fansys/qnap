@@ -3,7 +3,7 @@ description: Merge signature fragments, write repo.xml / repo_pre.xml, and commi
 
 inputs:
   accelerate_preset:
-    description: Feed URL GitHub accelerate preset (empty uses config.json)
+    description: Feed URL GitHub accelerate preset (none means use env or config.json)
     required: false
     default: "none"
   commit_message:
@@ -41,6 +41,10 @@ runs:
         GITHUB_TOKEN: ${{ github.token }}
         GITHUB_REPOSITORY: ${{ github.repository }}
         INPUT_ACCELERATE_PRESET: ${{ inputs.accelerate_preset }}
+        # Repository Variables must be mapped explicitly to become process env.
+        FEED_ACCELERATE_PREFIX: ${{ vars.FEED_ACCELERATE_PREFIX }}
+        FEED_ACCELERATE_PRESET: ${{ vars.FEED_ACCELERATE_PRESET }}
+        FEED_ACCELERATE_ENABLED: ${{ vars.FEED_ACCELERATE_ENABLED }}
       run: |
         set -euo pipefail
         mkdir -p out
@@ -53,9 +57,13 @@ runs:
           cp artifacts/signatures-tailscale/signatures-tailscale.json out/signatures-tailscale.json
           args+=(--signatures-in out/signatures-tailscale.json)
         fi
+        # "none" means do not pass CLI preset; let FEED_ACCELERATE_* / config.json decide.
         if [ -n "${INPUT_ACCELERATE_PRESET:-}" ] && [ "${INPUT_ACCELERATE_PRESET}" != "none" ]; then
           args+=(--accelerate-preset "${INPUT_ACCELERATE_PRESET}")
         fi
+        echo "accelerate env prefix=${FEED_ACCELERATE_PREFIX:-}"
+        echo "accelerate env preset=${FEED_ACCELERATE_PRESET:-}"
+        echo "accelerate input preset=${INPUT_ACCELERATE_PRESET:-}"
         python3 sync_release.py "${args[@]}"
 
     - name: Commit feed products
