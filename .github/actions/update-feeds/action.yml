@@ -3,9 +3,9 @@ description: Merge signature fragments, write repo.xml / repo_pre.xml, and commi
 
 inputs:
   accelerate_preset:
-    description: Feed URL GitHub accelerate preset (none means use env or config.json)
+    description: Feed URL GitHub accelerate preset (env reads FEED_ACCELERATE_*; none disables)
     required: false
-    default: "none"
+    default: env
   commit_message:
     description: Git commit message when feeds change
     required: false
@@ -57,13 +57,12 @@ runs:
           cp artifacts/signatures-tailscale/signatures-tailscale.json out/signatures-tailscale.json
           args+=(--signatures-in out/signatures-tailscale.json)
         fi
-        # "none" means do not pass CLI preset; let FEED_ACCELERATE_* / config.json decide.
-        if [ -n "${INPUT_ACCELERATE_PRESET:-}" ] && [ "${INPUT_ACCELERATE_PRESET}" != "none" ]; then
+        if [ -n "${INPUT_ACCELERATE_PRESET:-}" ]; then
           args+=(--accelerate-preset "${INPUT_ACCELERATE_PRESET}")
         fi
+        echo "accelerate input preset=${INPUT_ACCELERATE_PRESET:-}"
         echo "accelerate env prefix=${FEED_ACCELERATE_PREFIX:-}"
         echo "accelerate env preset=${FEED_ACCELERATE_PRESET:-}"
-        echo "accelerate input preset=${INPUT_ACCELERATE_PRESET:-}"
         python3 sync_release.py "${args[@]}"
 
     - name: Commit feed products

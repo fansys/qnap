@@ -138,8 +138,8 @@ def write_repo_feeds(
 ) -> tuple[Path, Path]:
     """Write repo.xml and repo_pre.xml via registered providers."""
     config = load_config()
-    # "none" from Actions means no preset override (use env / config.json).
-    preset = None if (accelerate_preset or "").strip().lower() in {"", "none"} else accelerate_preset
+    # Empty CLI value → let config.json default (env). Explicit none/env/ghproxy kept.
+    preset = (accelerate_preset or "").strip() or None
     effective_prefix = accelerate_prefix if accelerate_prefix is not None else base_url
     if isinstance(effective_prefix, str) and effective_prefix.strip() == "":
         effective_prefix = None

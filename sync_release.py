@@ -53,7 +53,8 @@ def _add_common(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument(
         "--accelerate-preset",
-        help="feed URL accelerate preset from config.json (ghproxy/ghfast/...)",
+        default="env",
+        help="feed URL accelerate preset: env (default, read FEED_ACCELERATE_*), none, ghproxy, ...",
     )
     parser.add_argument(
         "--accelerate-prefix",

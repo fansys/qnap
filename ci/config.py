@@ -12,6 +12,7 @@ from .paths import ROOT
 
 CONFIG_PATH = ROOT / "config.json"
 
+# Named mirror prefixes. ``env`` / ``none`` are special and handled in code.
 DEFAULT_ACCELERATE_PRESETS: dict[str, str] = {
     "none": "",
     "ghproxy": "https://ghproxy.net/",
@@ -45,14 +46,12 @@ def _env_bool(name: str) -> bool | None:
     return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
-def _unset_preset(value: str | None) -> str | None:
-    """Treat none/empty as 'no preset override'."""
-    if value is None:
+def _env_nonempty(name: str) -> str | None:
+    raw = os.environ.get(name)
+    if raw is None:
         return None
-    text = value.strip()
-    if text == "" or text.lower() == "none":
-        return None
-    return text
+    text = raw.strip()
+    return text if text else None
 
 
 def load_config(path: Path = CONFIG_PATH) -> dict[str, Any]:
@@ -60,14 +59,36 @@ def load_config(path: Path = CONFIG_PATH) -> dict[str, Any]:
     accelerate = dict(data.get("accelerate") or {})
     presets = dict(DEFAULT_ACCELERATE_PRESETS)
     presets.update({str(k): str(v) for k, v in dict(accelerate.get("presets") or {}).items()})
+    # Keep special names reserved even if config overrides them accidentally.
+    presets["none"] = ""
     accelerate["presets"] = presets
-    accelerate.setdefault("enabled", False)
+    accelerate.setdefault("enabled", True)
     accelerate.setdefault("mode", "prefix")
-    accelerate.setdefault("preset", "none")
+    accelerate.setdefault("preset", "env")
     accelerate.setdefault("prefix", "")
     feed = dict(data.get("feed") or {})
     feed.setdefault("providers", ["emby", "tailscale"])
     return {"accelerate": accelerate, "feed": feed}
+
+
+def _resolve_env_accelerate(presets: dict[str, str]) -> tuple[str, str]:
+    """Return (prefix, source) from environment, or ("", "none") when unset."""
+    env_prefix = _env_nonempty("FEED_ACCELERATE_PREFIX")
+    if env_prefix:
+        return _normalize_prefix(env_prefix), "FEED_ACCELERATE_PREFIX"
+    env_preset = _env_nonempty("FEED_ACCELERATE_PRESET")
+    if env_preset:
+        if env_preset in {"env", "none"}:
+            return "", f"FEED_ACCELERATE_PRESET={env_preset}"
+        if env_preset in presets:
+            return _normalize_prefix(str(presets[env_preset])), f"FEED_ACCELERATE_PRESET={env_preset}"
+        log(
+            "config",
+            f"unknown FEED_ACCELERATE_PRESET={env_preset}, fallback none",
+            level="warn",
+        )
+        return "", "none"
+    return "", "none"
 
 
 def resolve_accelerate_prefix(
@@ -79,62 +100,66 @@ def resolve_accelerate_prefix(
 ) -> str:
     """Resolve public feed URL accelerator prefix.
 
-    Priority:
-    1. explicit non-empty ``prefix`` argument / ``--accelerate-prefix`` / ``--base-url``
-    2. ``FEED_ACCELERATE_PREFIX`` environment variable
-    3. explicit ``preset`` argument (not ``none``) / ``FEED_ACCELERATE_PRESET``
-    4. ``config.json`` accelerate.preset / accelerate.prefix
+    Preset meanings:
+    - ``env`` (default): read ``FEED_ACCELERATE_PREFIX`` / ``FEED_ACCELERATE_PRESET``;
+      if neither is set, fallback to ``none`` (empty prefix).
+    - ``none``: empty prefix (no acceleration).
+    - other names: look up ``config.json`` / built-in presets.
 
-    ``preset=none`` (CLI or Actions default) means "do not override" — fall through
-    to env / config.json. It does **not** force an empty prefix.
+    Priority for concrete values:
+    1. explicit non-empty ``prefix`` / ``--accelerate-prefix`` / ``--base-url``
+    2. selected preset behavior (``env`` / ``none`` / named mirror)
     """
     cfg = (config or load_config())["accelerate"]
     presets: dict[str, str] = dict(cfg.get("presets") or DEFAULT_ACCELERATE_PRESETS)
+    presets["none"] = ""
 
     cli_prefix = _normalize_prefix(prefix) if prefix is not None and prefix.strip() else None
-    env_prefix_raw = os.environ.get("FEED_ACCELERATE_PREFIX")
-    env_prefix = (
-        _normalize_prefix(env_prefix_raw)
-        if env_prefix_raw is not None and env_prefix_raw.strip() != ""
-        else None
-    )
-    cli_preset = _unset_preset(preset)
-    env_preset = _unset_preset(os.environ.get("FEED_ACCELERATE_PRESET"))
-    env_enabled = _env_bool("FEED_ACCELERATE_ENABLED")
+    chosen = (preset if preset is not None else str(cfg.get("preset") or "env")).strip() or "env"
+    chosen_lower = chosen.lower()
 
+    env_enabled = _env_bool("FEED_ACCELERATE_ENABLED")
     use_enabled = bool(cfg.get("enabled"))
     if env_enabled is not None:
         use_enabled = env_enabled
     if enabled is not None:
         use_enabled = enabled
 
-    # Any concrete override means acceleration should apply even if config.enabled=false.
-    has_override = bool(cli_prefix or env_prefix or cli_preset or env_preset)
-    if not use_enabled and not has_override:
-        log("config", "accelerate disabled (config/env) and no override")
-        return ""
-
     if cli_prefix:
         log("config", f"accelerate source=cli-prefix value={cli_prefix}")
         return cli_prefix
-    if env_prefix:
-        log("config", f"accelerate source=FEED_ACCELERATE_PREFIX value={env_prefix}")
-        return env_prefix
 
-    chosen = cli_preset or env_preset or str(cfg.get("preset") or "none")
-    chosen = chosen.strip()
-    source = (
-        "cli-preset"
-        if cli_preset
-        else "FEED_ACCELERATE_PRESET"
-        if env_preset
-        else "config.json"
-    )
+    # Explicit none: always empty, regardless of env/config mirrors.
+    if chosen_lower == "none":
+        log("config", "accelerate source=preset:none value=-")
+        return ""
+
+    # Default env: environment first, otherwise fallback to none.
+    if chosen_lower == "env":
+        if not use_enabled:
+            # Still allow env override when enabled=false? User asked env preset to read env.
+            # If FEED_ACCELERATE_ENABLED=false, honor that and return empty.
+            if env_enabled is False:
+                log("config", "accelerate disabled by FEED_ACCELERATE_ENABLED=false")
+                return ""
+        value, source = _resolve_env_accelerate(presets)
+        log("config", f"accelerate source=preset:env/{source} value={value or '-'}")
+        return value
+
+    # Named mirror preset.
+    if not use_enabled and env_enabled is not True:
+        # Named preset from CLI/Actions still counts as an explicit request.
+        if preset is None:
+            log("config", "accelerate disabled (config/env)")
+            return ""
+
     if chosen in presets:
         value = _normalize_prefix(str(presets[chosen]))
-    else:
-        value = _normalize_prefix(str(cfg.get("prefix") or ""))
-    log("config", f"accelerate source={source} preset={chosen} value={value or '-'}")
+        log("config", f"accelerate source=preset:{chosen} value={value or '-'}")
+        return value
+
+    value = _normalize_prefix(str(cfg.get("prefix") or ""))
+    log("config", f"accelerate source=config.prefix value={value or '-'}")
     return value
 
 

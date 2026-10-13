@@ -28,10 +28,10 @@ name: Sync Emby (manual)
         type: boolean
         default: false
       accelerate_preset:
-        description: Feed URL GitHub accelerate preset (none means use config.json)
+        description: Feed URL GitHub accelerate preset (env reads FEED_ACCELERATE_*; none disables)
         required: false
         type: string
-        default: none
+        default: env
 
 permissions:
   contents: write

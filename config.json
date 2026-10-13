@@ -2,7 +2,7 @@
   "accelerate": {
     "enabled": true,
     "mode": "prefix",
-    "preset": "ghproxy",
+    "preset": "env",
     "prefix": "",
     "presets": {
       "none": "",
