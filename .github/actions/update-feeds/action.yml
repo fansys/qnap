@@ -1,0 +1,73 @@
+name: Update QNAP repo feeds
+description: Merge signature fragments, write repo.xml / repo_pre.xml, and commit
+
+inputs:
+  accelerate_preset:
+    description: Feed URL GitHub accelerate preset (empty = config.json)
+    required: false
+    default: ""
+  commit_message:
+    description: Git commit message when feeds change
+    required: false
+    default: "chore: update repo feeds"
+  python_version:
+    description: Python version
+    required: false
+    default: "3.12"
+
+runs:
+  using: composite
+  steps:
+    - name: Install system dependencies
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends openssl ca-certificates
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python_version }}
+
+    - name: Download signature fragments
+      uses: actions/download-artifact@v4
+      continue-on-error: true
+      with:
+        path: artifacts
+
+    - name: Write repo.xml and repo_pre.xml
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        INPUT_ACCELERATE_PRESET: ${{ inputs.accelerate_preset }}
+      run: |
+        set -euo pipefail
+        mkdir -p out
+        args=(feeds --repo "${GITHUB_REPOSITORY}" --ref "${GITHUB_REF_NAME}")
+        if [ -f artifacts/signatures-emby/signatures-emby.json ]; then
+          cp artifacts/signatures-emby/signatures-emby.json out/signatures-emby.json
+          args+=(--signatures-in out/signatures-emby.json)
+        fi
+        if [ -f artifacts/signatures-tailscale/signatures-tailscale.json ]; then
+          cp artifacts/signatures-tailscale/signatures-tailscale.json out/signatures-tailscale.json
+          args+=(--signatures-in out/signatures-tailscale.json)
+        fi
+        if [ -n "${INPUT_ACCELERATE_PRESET:-}" ]; then
+          args+=(--accelerate-preset "${INPUT_ACCELERATE_PRESET}")
+        fi
+        python3 sync_release.py "${args[@]}"
+
+    - name: Commit feed products
+      shell: bash
+      run: |
+        set -euo pipefail
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add repo.xml repo_pre.xml signatures.json
+        if git diff --staged --quiet; then
+          echo "No feed product changes to commit"
+        else
+          git commit -m "${{ inputs.commit_message }}"
+          git push
+        fi

@@ -1,0 +1,100 @@
+name: Sync Tailscale (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Tailscale product version (e.g. 1.104.1; empty = current stable)"
+        required: false
+        type: string
+      force:
+        description: "Re-upload assets even if release tag already exists"
+        required: false
+        type: boolean
+        default: false
+      dry_run:
+        description: "Discover only; do not publish or write feeds"
+        required: false
+        type: boolean
+        default: false
+      skip_feeds:
+        description: "Only publish Tailscale release; do not update repo.xml"
+        required: false
+        type: boolean
+        default: false
+      accelerate_preset:
+        description: "Feed URL GitHub accelerate preset (none/ghproxy/ghfast/...; empty = config.json)"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-tailscale-manual
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  tailscale:
+    name: Sync Tailscale
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends openssl ca-certificates
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Sync Tailscale packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_FORCE: ${{ inputs.force }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          args=(tailscale --repo "${GITHUB_REPOSITORY}" --ref "${GITHUB_REF_NAME}")
+          if [ -n "${INPUT_VERSION:-}" ]; then
+            args+=(--version "${INPUT_VERSION}")
+          fi
+          if [ "${INPUT_FORCE:-false}" = "true" ]; then
+            args+=(--force)
+          fi
+          if [ "${INPUT_DRY_RUN:-false}" = "true" ]; then
+            args+=(--dry-run)
+          fi
+          python3 sync_release.py "${args[@]}"
+
+      - name: Upload Tailscale signature fragment
+        if: ${{ inputs.dry_run != true && inputs.skip_feeds != true }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: signatures-tailscale
+          path: out/signatures-tailscale.json
+          if-no-files-found: warn
+
+  feeds:
+    name: Update repo feeds
+    needs: [tailscale]
+    if: ${{ inputs.dry_run != true && inputs.skip_feeds != true }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Update feeds
+        uses: ./.github/actions/update-feeds
+        with:
+          accelerate_preset: ${{ inputs.accelerate_preset }}
+          commit_message: chore: update repo feeds after Tailscale sync

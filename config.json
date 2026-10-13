@@ -1,0 +1,18 @@
+{
+  "accelerate": {
+    "enabled": true,
+    "mode": "prefix",
+    "preset": "ghproxy",
+    "prefix": "",
+    "presets": {
+      "none": "",
+      "ghproxy": "https://ghproxy.net/",
+      "ghproxy_mirror": "https://mirror.ghproxy.com/",
+      "ghfast": "https://ghfast.top/",
+      "gh_ddlc": "https://gh.ddlc.top/"
+    }
+  },
+  "feed": {
+    "providers": ["emby", "tailscale"]
+  }
+}

@@ -1,0 +1,110 @@
+name: Sync Emby (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Emby upstream version (empty = latest non-prerelease)"
+        required: false
+        type: string
+      allow_prerelease:
+        description: "Allow upstream pre-release packages"
+        required: false
+        type: boolean
+        default: false
+      dry_run:
+        description: "Discover only; do not publish or write feeds"
+        required: false
+        type: boolean
+        default: false
+      skip_feeds:
+        description: "Only publish Emby release; do not update repo.xml"
+        required: false
+        type: boolean
+        default: false
+      accelerate_preset:
+        description: "Feed URL GitHub accelerate preset (none/ghproxy/ghfast/...; empty = config.json)"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-emby-manual
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  emby:
+    name: Sync Emby
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends p7zip-full openssl ca-certificates
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Verify signing material
+        if: ${{ inputs.dry_run != true }}
+        run: |
+          set -euo pipefail
+          test -f signing/certificate.pem
+          test -f signing/private_key.pem
+          openssl version
+          7z -h >/dev/null
+          gh --version
+
+      - name: Sync Emby packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_ALLOW_PRERELEASE: ${{ inputs.allow_prerelease }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          args=(emby --repo "${GITHUB_REPOSITORY}" --ref "${GITHUB_REF_NAME}")
+          if [ -n "${INPUT_VERSION:-}" ]; then
+            args+=(--version "${INPUT_VERSION}")
+          fi
+          if [ "${INPUT_ALLOW_PRERELEASE:-false}" = "true" ]; then
+            args+=(--allow-prerelease)
+          fi
+          if [ "${INPUT_DRY_RUN:-false}" = "true" ]; then
+            args+=(--dry-run)
+          fi
+          python3 sync_release.py "${args[@]}"
+
+      - name: Upload Emby signature fragment
+        if: ${{ inputs.dry_run != true && inputs.skip_feeds != true }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: signatures-emby
+          path: out/signatures-emby.json
+          if-no-files-found: warn
+
+  feeds:
+    name: Update repo feeds
+    needs: [emby]
+    if: ${{ inputs.dry_run != true && inputs.skip_feeds != true }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Update feeds
+        uses: ./.github/actions/update-feeds
+        with:
+          accelerate_preset: ${{ inputs.accelerate_preset }}
+          commit_message: chore: update repo feeds after Emby sync

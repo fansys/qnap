@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*.qpkg
+out/**
+!out/.gitkeep
+.DS_Store
+.env
+*.part
+.idea/
+.vscode/
