@@ -42,13 +42,19 @@ python3 sync_release.py all --repo <owner>/<name> --dry-run   # 本地串行便�
 
 ## GitHub 加速（repo.xml 下载根）
 
-`config.json` 控制 feed 中 `location` / 图标等 GitHub URL 是否套加速前缀：
+默认 preset 为 **`env`**：先读环境变量，没有配置则兜底 **`none`**（不加速）。
+
+| preset | 行为 |
+|---|---|
+| `env`（默认） | 读 `FEED_ACCELERATE_PREFIX`，否则读 `FEED_ACCELERATE_PRESET`；都没有 → 不加速 |
+| `none` | 强制不加速 |
+| `ghproxy` / `ghfast` / ... | 使用 `config.json` 里对应前缀 |
 
 ```json
 {
   "accelerate": {
     "enabled": true,
-    "preset": "ghproxy",
+    "preset": "env",
     "presets": {
       "ghproxy": "https://ghproxy.net/",
       "ghfast": "https://ghfast.top/"
@@ -57,28 +63,13 @@ python3 sync_release.py all --repo <owner>/<name> --dry-run   # 本地串行便�
 }
 ```
 
-效果示例：
+GitHub Actions：**Settings → Variables** 配置：
 
-```text
-https://ghproxy.net/https://github.com/<owner>/<repo>/releases/download/emby-4.10.1.0/...
-https://ghproxy.net/https://raw.githubusercontent.com/<owner>/<repo>/<ref>/assets/emby-icon.gif
-```
+- `FEED_ACCELERATE_PREFIX`：例如 `https://ghproxy.net/`（推荐）
+- `FEED_ACCELERATE_PRESET`：可选，如 `ghfast`（PREFIX 未设时生效）
+- `FEED_ACCELERATE_ENABLED`：可选
 
-覆盖方式（优先级从高到低）：
-
-1. CLI `--accelerate-prefix` / `--base-url`
-2. 环境变量 / Actions Variable `FEED_ACCELERATE_PREFIX`
-3. CLI / Actions 输入 `accelerate_preset`（**`none` = 不覆盖**，继续用 env / config.json）
-4. 环境变量 / Actions Variable `FEED_ACCELERATE_PRESET`
-5. `config.json`
-
-GitHub Actions 里请在仓库 **Settings → Secrets and variables → Actions → Variables** 配置：
-
-- `FEED_ACCELERATE_PREFIX`：例如 `https://ghproxy.net/`
-- `FEED_ACCELERATE_PRESET`：可选，如 `ghfast`
-- `FEED_ACCELERATE_ENABLED`：可选，`true` / `false`
-
-手动运行参数 `accelerate_preset` 默认 `none` 表示「用上面的 Variable / config.json」，不会清空加速前缀。
+手动参数 `accelerate_preset` 默认就是 `env`。
 
 新增软件源应用：实现 `FeedProvider` 并在 `config.json` → `feed.providers` 注册名称（见 `ci/providers.py`）。
 
