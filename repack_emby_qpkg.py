@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Patch the supplied Emby 4.9.5.0 QNAP package and rebuild its QPKG."""
+"""Patch the supplied Emby QNAP package (4.9.x / 4.10.x) and rebuild its QPKG."""
 
 from __future__ import annotations
 
@@ -31,10 +31,18 @@ from qnap_signing import (
 )
 
 
-VALIDATE_DEVICE_OLD = (
-    b'ajax({url:"https://mb3admin.com/admin/service/registration/'
-    b'validateDevice?"+new URLSearchParams(params).toString(),type:"POST",'
-    b'dataType:"json"})'
+# Emby 4.9.x used ajax({...}); 4.10.x passes AbortSignal: ajax({...},signal).
+VALIDATE_DEVICE_OLD_VARIANTS = (
+    (
+        b'ajax({url:"https://mb3admin.com/admin/service/registration/'
+        b'validateDevice?"+new URLSearchParams(params).toString(),type:"POST",'
+        b'dataType:"json"},signal)'
+    ),
+    (
+        b'ajax({url:"https://mb3admin.com/admin/service/registration/'
+        b'validateDevice?"+new URLSearchParams(params).toString(),type:"POST",'
+        b'dataType:"json"})'
+    ),
 )
 VALIDATE_DEVICE_NEW = (
     b"new Promise(function(resolve) {resolve('"
@@ -95,6 +103,34 @@ def replace_once(
             )
         new = new.ljust(len(old), b" ")
     return data.replace(old, new, 1)
+
+
+def replace_first_variant(
+    data: bytes,
+    old_variants: Iterable[bytes],
+    new: bytes,
+    *,
+    label: str,
+    pad_to_original: bool = False,
+) -> bytes:
+    """Replace exactly one occurrence from a list of known source variants."""
+    matched: list[bytes] = [old for old in old_variants if data.count(old) == 1]
+    if not matched:
+        counts = {old[:48]: data.count(old) for old in old_variants}
+        raise PatchError(
+            f"{label}: expected one known source variant once, found {counts}"
+        )
+    if len(matched) > 1:
+        raise PatchError(
+            f"{label}: multiple source variants matched ({len(matched)}); refusing ambiguous patch"
+        )
+    return replace_once(
+        data,
+        matched[0],
+        new,
+        label=label,
+        pad_to_original=pad_to_original,
+    )
 
 
 def constant_return_il(value: bool) -> bytes:
@@ -530,9 +566,9 @@ class DotNetImage:
 
 
 def patch_web_dll(data: bytes) -> bytes:
-    patched = replace_once(
+    patched = replace_first_variant(
         data,
-        VALIDATE_DEVICE_OLD,
+        VALIDATE_DEVICE_OLD_VARIANTS,
         VALIDATE_DEVICE_NEW,
         label=TARGET_WEB_DLL,
         pad_to_original=True,
@@ -573,9 +609,9 @@ def patch_target(path: str, data: bytes) -> bytes:
     if path == TARGET_MODEL_DLL:
         return patch_model_dll(data)
     if path == TARGET_CONNECTION_JS:
-        return replace_once(
+        return replace_first_variant(
             data,
-            VALIDATE_DEVICE_OLD,
+            VALIDATE_DEVICE_OLD_VARIANTS,
             VALIDATE_DEVICE_NEW,
             label=path,
         )
