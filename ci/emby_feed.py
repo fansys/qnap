@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from .logutil import log
 from .paths import ICON_RELATIVE
 from .providers import FeedContext
 from .signatures import resolve_signature
@@ -33,6 +34,11 @@ def build_emby_feed_item(
         ctx.signatures,
         ctx.openssl,
         download_url=canonical,
+    )
+    log(
+        "feeds",
+        f"emby item channel={ctx.channel} version={version} "
+        f"location={package_url} signature_len={len(signature)}",
     )
     return {
         "name": DISPLAY_NAME,

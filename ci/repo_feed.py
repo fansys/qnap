@@ -9,6 +9,7 @@ from typing import Any
 import xml.etree.ElementTree as ET
 
 from .config import configured_providers, load_config, resolve_accelerate_prefix
+from .logutil import StepTimer, log, log_kv
 from .own_releases import fetch_own_catalog
 from .paths import REPO_PRE_XML_PATH, REPO_XML_PATH
 from .providers import FeedContext, get_provider, load_builtin_providers
@@ -107,7 +108,17 @@ def _write_items(destination: Path, items: list[dict[str, object]]) -> Path:
     xml = build_plugins_xml(items) if items else empty_repository_xml()
     destination.write_bytes(xml)
     names = ", ".join(str(item["internalName"]) for item in items) or "empty"
-    print(f"wrote {destination} ({names})")
+    versions = ", ".join(str(item.get("version") or "-") for item in items) or "-"
+    log_kv(
+        "feeds",
+        "wrote feed",
+        {
+            "path": destination,
+            "items": names,
+            "versions": versions,
+            "bytes": len(xml),
+        },
+    )
     return destination
 
 
@@ -136,8 +147,20 @@ def write_repo_feeds(
     )
     urls = FeedUrls(repo=repo, ref=ref, accelerate_prefix=prefix)
     provider_names = providers or configured_providers(config)
+    log_kv(
+        "feeds",
+        "config",
+        {
+            "repo": repo,
+            "ref": ref,
+            "providers": ",".join(provider_names),
+            "accelerate_prefix": prefix or "-",
+            "signature_keys": len(signature_by_version),
+        },
+    )
 
-    catalog = fetch_own_catalog(repo)
+    with StepTimer("feeds", "list own GitHub releases"):
+        catalog = fetch_own_catalog(repo)
     stable = [item for item in catalog.emby if not item.get("prerelease")]
     prerelease = [item for item in catalog.emby if item.get("prerelease")]
     stable_emby = _pick_latest(stable)
@@ -145,9 +168,17 @@ def write_repo_feeds(
     pre_emby = _pick_latest(
         sorted(pre_candidates, key=lambda item: version_key(item["version"]), reverse=True)
     )
-
-    if prefix:
-        print(f"feed accelerate prefix: {prefix}")
+    log_kv(
+        "feeds",
+        "catalog",
+        {
+            "emby_total": len(catalog.emby),
+            "emby_stable": stable_emby["version"] if stable_emby else "-",
+            "emby_pre_pick": pre_emby["version"] if pre_emby else "-",
+            "tailscale": (catalog.tailscale or {}).get("version", "-"),
+            "tailscale_arches": len((catalog.tailscale or {}).get("packages") or {}),
+        },
+    )
 
     common = {
         "repo": repo,
@@ -159,13 +190,16 @@ def write_repo_feeds(
         "emby_prerelease_pick": pre_emby,
         "own_tailscale": catalog.tailscale,
     }
-    stable_items = _collect_feed_items(
-        FeedContext(**common, channel="stable"), provider_names
-    )
-    pre_items = _collect_feed_items(
-        FeedContext(**common, channel="prerelease"), provider_names
-    )
+    with StepTimer("feeds", "build repo.xml items"):
+        stable_items = _collect_feed_items(
+            FeedContext(**common, channel="stable"), provider_names
+        )
+    with StepTimer("feeds", "build repo_pre.xml items"):
+        pre_items = _collect_feed_items(
+            FeedContext(**common, channel="prerelease"), provider_names
+        )
     save_signature_cache(signature_by_version)
+    log("feeds", f"persisted signatures.json keys={len(signature_by_version)}")
     return (
         _write_items(stable_destination, stable_items),
         _write_items(prerelease_destination, pre_items),

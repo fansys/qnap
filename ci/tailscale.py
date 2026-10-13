@@ -13,6 +13,7 @@ import urllib.error
 
 from .github_client import release_tag_exists
 from .http_util import HttpError, download_file, head_ok, read_text
+from .logutil import StepTimer, file_size, log, log_kv
 from .own_releases import fetch_own_catalog
 from .paths import PACKAGE_DIR, ensure_out_dirs
 from .qpkg_sig import extract_repository_signature
@@ -64,6 +65,7 @@ KNOWN_ARCHES: tuple[str, ...] = tuple(
 
 
 def fetch_stable_qpkgs() -> dict[str, Any]:
+    log("tailscale", f"fetch package index url={STABLE_JSON_URL}")
     try:
         payload = json.loads(read_text(STABLE_JSON_URL))
     except (HttpError, ValueError) as error:
@@ -74,10 +76,13 @@ def fetch_stable_qpkgs() -> dict[str, Any]:
     version = str(payload.get("QPKGsVersion") or "")
     if not isinstance(qpkgs, dict) or not version:
         raise GithubError("Tailscale QPKGs / QPKGsVersion missing from index")
-    return {
-        "version": version,
-        "packages": {str(arch): str(name) for arch, name in qpkgs.items()},
-    }
+    packages = {str(arch): str(name) for arch, name in qpkgs.items()}
+    log_kv(
+        "tailscale",
+        "stable index",
+        {"version": version, "arches": ",".join(sorted(packages))},
+    )
+    return {"version": version, "packages": packages}
 
 
 def _verify_sha256(package: Path, sha_url: str) -> None:
@@ -85,7 +90,7 @@ def _verify_sha256(package: Path, sha_url: str) -> None:
         text = read_text(sha_url, timeout=30).strip()
     except HttpError as error:
         if "404" in str(error):
-            print(f"warning: no sha256 for {package.name}")
+            log("tailscale", f"no sha256 sidecar for {package.name}", level="warn")
             return
         raise GithubError(f"Tailscale sha256 fetch failed: {error}") from error
     expected = text.split()[0].lower()
@@ -94,6 +99,11 @@ def _verify_sha256(package: Path, sha_url: str) -> None:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     actual = digest.hexdigest()
+    log_kv(
+        "tailscale",
+        "sha256 check",
+        {"file": package.name, "expected": expected, "actual": actual},
+    )
     if actual != expected:
         raise RuntimeError(f"Tailscale SHA256 mismatch for {package.name}")
 
@@ -107,15 +117,26 @@ def download_tailscale_packages(
     target_dir = PACKAGE_DIR / f"tailscale-{version}"
     target_dir.mkdir(parents=True, exist_ok=True)
     paths: list[Path] = []
+    log("tailscale", f"download {len(packages)} qpkg(s) into {target_dir}")
     for arch, filename in sorted(packages.items()):
         destination = target_dir / filename
         url = f"{STABLE_BASE_URL}{filename}"
-        print(f"download {url}")
-        download_file(url, destination)
-        _verify_sha256(destination, f"{url}.sha256")
+        with StepTimer("tailscale", f"download {arch}"):
+            log("tailscale", f"GET {url}")
+            download_file(url, destination)
+            _verify_sha256(destination, f"{url}.sha256")
+        log_kv(
+            "tailscale",
+            "downloaded package",
+            {"arch": arch, "path": destination, "size": file_size(destination)},
+        )
         match = VERSION_IN_NAME.fullmatch(filename)
         if match and match.group("arch") != arch:
-            print(f"warning: arch key {arch} != filename arch {match.group('arch')}")
+            log(
+                "tailscale",
+                f"arch key {arch} != filename arch {match.group('arch')}",
+                level="warn",
+            )
         paths.append(destination)
     return paths
 
@@ -141,6 +162,11 @@ def create_tailscale_release(repo: str, version: str, packages: list[Path]) -> N
         "--notes",
         notes,
     ]
+    log_kv(
+        "tailscale",
+        "gh release create",
+        {"repo": repo, "tag": tag, "assets": len(packages)},
+    )
     subprocess.run(command, check=True)
 
 
@@ -162,6 +188,12 @@ def resolve_packages(version: str | None = None) -> tuple[str, dict[str, str]]:
             f"invalid Tailscale version {version!r}; expected like 1.104.1"
         )
 
+    log_kv(
+        "tailscale",
+        "probe versioned packages",
+        {"tag_version": tag_version, "file_version": file_version, "arches": len(KNOWN_ARCHES)},
+    )
+
     def _probe(arch: str) -> tuple[str, str] | None:
         filename = f"Tailscale_{file_version}_{arch}.qpkg"
         url = f"{STABLE_BASE_URL}{filename}"
@@ -174,6 +206,7 @@ def resolve_packages(version: str | None = None) -> tuple[str, dict[str, str]]:
             hit = future.result()
             if hit:
                 packages[hit[0]] = hit[1]
+    log("tailscale", f"probe hits arches={','.join(sorted(packages)) or '-'}")
     if not packages:
         raise GithubError(
             f"no Tailscale QPKGs found on stable for version {tag_version}"
@@ -192,18 +225,44 @@ def sync_tailscale(
 ) -> SyncResult:
     """Ensure Tailscale QPKGs exist as a GitHub Release."""
     produced: dict[str, str] = {}
-    resolved_version, packages = resolve_packages(version)
+    log_kv(
+        "tailscale",
+        "sync config",
+        {
+            "repo": repo,
+            "version": version or "stable-latest",
+            "force": force,
+            "dry_run": dry_run,
+            "openssl": openssl,
+        },
+    )
+    with StepTimer("tailscale", "resolve packages"):
+        resolved_version, packages = resolve_packages(version)
     tag = tailscale_release_tag(resolved_version)
-    if release_tag_exists(repo, tag) and not force:
-        print(f"skip existing Tailscale release tag: {tag}")
+    log_kv(
+        "tailscale",
+        "resolved",
+        {
+            "version": resolved_version,
+            "tag": tag,
+            "package_count": len(packages),
+            "arches": ",".join(sorted(packages)),
+        },
+    )
+    with StepTimer("tailscale", f"check release tag {tag}"):
+        exists = release_tag_exists(repo, tag)
+    if exists and not force:
+        log("tailscale", f"skip existing release tag={tag}")
         if signatures_out is not None:
             save_signature_cache(produced, signatures_out)
         emit_released(False)
         return SyncResult(signatures=produced, released=False)
     if dry_run:
-        print(
-            f"dry-run: would download/publish Tailscale {resolved_version} "
-            f"({len(packages)} qpkg) as {repo}@{tag}"
+        action = "force-upload" if exists and force else "create"
+        log(
+            "tailscale",
+            f"dry-run would {action} version={resolved_version} "
+            f"packages={len(packages)} repo={repo} tag={tag}",
         )
         if signatures_out is not None:
             save_signature_cache(produced, signatures_out)
@@ -214,30 +273,60 @@ def sync_tailscale(
         match = VERSION_IN_NAME.fullmatch(path.name)
         arch = match.group("arch") if match else path.stem
         try:
-            produced[f"tailscale:{resolved_version}:{arch}"] = extract_repository_signature(
-                path, openssl
+            with StepTimer("tailscale", f"extract signature {arch}"):
+                produced[f"tailscale:{resolved_version}:{arch}"] = (
+                    extract_repository_signature(path, openssl)
+                )
+            log(
+                "tailscale",
+                f"signature key=tailscale:{resolved_version}:{arch} "
+                f"len={len(produced[f'tailscale:{resolved_version}:{arch}'])}",
             )
         except Exception as error:  # noqa: BLE001
-            print(f"warning: could not extract signature from {path.name}: {error}")
-    if release_tag_exists(repo, tag) and force:
-        subprocess.run(
-            [
-                "gh",
-                "release",
-                "upload",
-                tag,
-                *[str(path) for path in paths],
-                "--repo",
-                repo,
-                "--clobber",
-            ],
-            check=True,
-        )
+            log(
+                "tailscale",
+                f"could not extract signature from {path.name}: {error}",
+                level="warn",
+            )
+    if exists and force:
+        with StepTimer("tailscale", f"force-upload release {tag}"):
+            subprocess.run(
+                [
+                    "gh",
+                    "release",
+                    "upload",
+                    tag,
+                    *[str(path) for path in paths],
+                    "--repo",
+                    repo,
+                    "--clobber",
+                ],
+                check=True,
+            )
+        action = "force-upload"
     else:
-        create_tailscale_release(repo, resolved_version, paths)
+        with StepTimer("tailscale", f"create release {tag}"):
+            create_tailscale_release(repo, resolved_version, paths)
+        action = "create"
     if signatures_out is not None:
         save_signature_cache(produced, signatures_out)
+        log_kv(
+            "tailscale",
+            "wrote signature fragment",
+            {"path": signatures_out, "keys": len(produced)},
+        )
     emit_released(True)
+    log_kv(
+        "tailscale",
+        "sync summary",
+        {
+            "released": True,
+            "action": action,
+            "tag": tag,
+            "assets": len(paths),
+            "signature_keys": sorted(produced.keys()) or "-",
+        },
+    )
     return SyncResult(signatures=produced, released=True)
 
 

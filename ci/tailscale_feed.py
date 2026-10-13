@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from .logutil import log
 from .paths import PACKAGE_DIR
 from .providers import FeedContext
 from .qpkg_sig import extract_repository_signature
@@ -53,7 +54,11 @@ def build_tailscale_feed_item(
                     signature = extract_repository_signature(local, ctx.openssl)
                     ctx.signatures[sig_key] = signature
                 except Exception as error:  # noqa: BLE001
-                    print(f"warning: signature extract failed for {filename}: {error}")
+                    log(
+                        "feeds",
+                        f"signature extract failed for {filename}: {error}",
+                        level="warn",
+                    )
         platforms.append(
             {
                 "platformID": platform_id,
@@ -63,6 +68,11 @@ def build_tailscale_feed_item(
         )
     if not platforms:
         raise RuntimeError(f"no Tailscale platforms available for {version}")
+    log(
+        "feeds",
+        f"tailscale item version={version} platforms={len(platforms)} "
+        f"sample_location={platforms[0]['location']}",
+    )
     return {
         "name": "Tailscale",
         "internalName": "Tailscale",

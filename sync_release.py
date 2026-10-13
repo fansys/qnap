@@ -23,6 +23,8 @@ sys.path.insert(0, str(ROOT))
 
 from ci.emby import sync_emby  # noqa: E402
 from ci.github_client import default_repo  # noqa: E402
+from ci.http_util import HttpError  # noqa: E402
+from ci.logutil import StepTimer, log, log_kv  # noqa: E402
 from ci.paths import (  # noqa: E402
     DEFAULT_CERT,
     DEFAULT_KEY,
@@ -38,7 +40,6 @@ from ci.signatures import (  # noqa: E402
     save_signature_cache,
 )
 from ci.tailscale import sync_tailscale  # noqa: E402
-from ci.http_util import HttpError  # noqa: E402
 from ci.upstream import GithubError  # noqa: E402
 
 
@@ -143,6 +144,7 @@ def _require_repo(repo: str) -> None:
 def _run_emby(args: argparse.Namespace) -> int:
     _require_repo(args.repo)
     ensure_out_dirs()
+    log("cli", "command=emby")
     if not args.dry_run:
         certificate = args.sign_cert.expanduser().resolve()
         private_key = args.sign_key.expanduser().resolve()
@@ -153,61 +155,86 @@ def _run_emby(args: argparse.Namespace) -> int:
     else:
         certificate = args.sign_cert
         private_key = args.sign_key
-    sync_emby(
-        args.repo,
-        certificate=certificate,
-        private_key=private_key,
-        seven_zip=args.seven_zip,
-        openssl=args.openssl,
-        version=args.version,
-        allow_prerelease=args.allow_prerelease,
-        dry_run=args.dry_run,
-        force=getattr(args, "force", False),
-        signatures_out=args.signatures_out,
-    )
+    with StepTimer("cli", "emby sync"):
+        sync_emby(
+            args.repo,
+            certificate=certificate,
+            private_key=private_key,
+            seven_zip=args.seven_zip,
+            openssl=args.openssl,
+            version=args.version,
+            allow_prerelease=args.allow_prerelease,
+            dry_run=args.dry_run,
+            force=getattr(args, "force", False),
+            signatures_out=args.signatures_out,
+        )
     return 0
 
 
 def _run_tailscale(args: argparse.Namespace) -> int:
     _require_repo(args.repo)
     ensure_out_dirs()
-    sync_tailscale(
-        args.repo,
-        openssl=args.openssl,
-        version=getattr(args, "version", None),
-        dry_run=args.dry_run,
-        signatures_out=args.signatures_out,
-        force=getattr(args, "force", False),
-    )
+    log("cli", "command=tailscale")
+    with StepTimer("cli", "tailscale sync"):
+        sync_tailscale(
+            args.repo,
+            openssl=args.openssl,
+            version=getattr(args, "version", None),
+            dry_run=args.dry_run,
+            signatures_out=args.signatures_out,
+            force=getattr(args, "force", False),
+        )
     return 0
 
 
 def _run_feeds(args: argparse.Namespace) -> int:
     _require_repo(args.repo)
+    log("cli", "command=feeds")
     if args.dry_run:
-        print("dry-run: skipping repo.xml / repo_pre.xml write")
+        log("feeds", "dry-run skipping repo.xml / repo_pre.xml write")
         return 0
     ensure_out_dirs()
-    fragments = [load_signature_cache(path) for path in args.signatures_in if path.is_file()]
-    # Also pick up default fragment paths when present (local `all` / Actions).
+    fragment_paths = [path for path in args.signatures_in if path.is_file()]
     for default_path in (SIGNATURES_EMBY_FRAGMENT, SIGNATURES_TAILSCALE_FRAGMENT):
         if default_path.is_file() and default_path not in args.signatures_in:
-            fragments.append(load_signature_cache(default_path))
-    signatures = merge_signature_caches(load_signature_cache(SIGNATURES_PATH), *fragments)
-    write_repo_feeds(
-        args.repo,
-        ref=args.ref,
-        base_url=args.base_url,
-        accelerate_preset=getattr(args, "accelerate_preset", None),
-        accelerate_prefix=getattr(args, "accelerate_prefix", None),
-        signature_by_version=signatures,
-        openssl=args.openssl,
+            fragment_paths.append(default_path)
+    log_kv(
+        "feeds",
+        "signature inputs",
+        {
+            "base": SIGNATURES_PATH if SIGNATURES_PATH.is_file() else "-",
+            "fragments": ",".join(str(path) for path in fragment_paths) or "-",
+        },
     )
+    fragments = [load_signature_cache(path) for path in fragment_paths]
+    signatures = merge_signature_caches(load_signature_cache(SIGNATURES_PATH), *fragments)
+    log("feeds", f"merged signature keys={len(signatures)}")
+    with StepTimer("cli", "write feeds"):
+        write_repo_feeds(
+            args.repo,
+            ref=args.ref,
+            base_url=args.base_url,
+            accelerate_preset=getattr(args, "accelerate_preset", None),
+            accelerate_prefix=getattr(args, "accelerate_prefix", None),
+            signature_by_version=signatures,
+            openssl=args.openssl,
+        )
     save_signature_cache(signatures, SIGNATURES_PATH)
     return 0
 
 
 def _run_all(args: argparse.Namespace) -> int:
+    log_kv(
+        "cli",
+        "command=all",
+        {
+            "repo": args.repo,
+            "skip_emby": args.skip_emby,
+            "skip_tailscale": args.skip_tailscale,
+            "force": args.force,
+            "dry_run": args.dry_run,
+        },
+    )
     shared = {
         "repo": args.repo,
         "dry_run": args.dry_run,
@@ -246,7 +273,6 @@ def _run_all(args: argparse.Namespace) -> int:
         )
     )
 
-
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "emby":
@@ -264,8 +290,8 @@ if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except subprocess.CalledProcessError as error:
-        print(f"error: command failed with {error.returncode}", file=sys.stderr)
+        log("cli", f"command failed with exit={error.returncode}", level="error")
         raise SystemExit(error.returncode)
     except (GithubError, HttpError, OSError, RuntimeError, ValueError) as error:
-        print(f"error: {error}", file=sys.stderr)
+        log("cli", str(error), level="error")
         raise SystemExit(1)

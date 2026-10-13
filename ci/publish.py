@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 import subprocess
 
+from .logutil import log_kv
 from .tags import emby_release_tag
 from .upstream import ReleaseInfo
 
@@ -33,11 +34,26 @@ def create_github_release(repo: str, release: ReleaseInfo, package: Path) -> Non
     ]
     if release.prerelease:
         command.append("--prerelease")
+    log_kv(
+        "publish",
+        "gh release create",
+        {
+            "repo": repo,
+            "tag": tag,
+            "prerelease": release.prerelease,
+            "asset": package.name,
+        },
+    )
     subprocess.run(command, check=True)
 
 
 def upload_release_asset(repo: str, tag: str, package: Path) -> None:
     """Replace an asset on an existing release tag."""
+    log_kv(
+        "publish",
+        "gh release upload --clobber",
+        {"repo": repo, "tag": tag, "asset": package.name},
+    )
     subprocess.run(
         [
             "gh",
