@@ -158,4 +158,4 @@ jobs:
         uses: ./.github/actions/update-feeds
         with:
           accelerate_preset: ${{ inputs.accelerate_preset }}
-          commit_message: chore: update repo feeds
+          commit_message: "chore: update repo feeds"
