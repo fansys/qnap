@@ -1,32 +1,32 @@
 name: Sync Emby (manual)
 
-on:
+"on":
   workflow_dispatch:
     inputs:
       version:
-        description: "Emby upstream version (empty = latest non-prerelease)"
+        description: Emby upstream version (empty means latest non-prerelease)
         required: false
         type: string
       allow_prerelease:
-        description: "Allow upstream pre-release packages"
+        description: Allow upstream pre-release packages
         required: false
         type: boolean
         default: false
       dry_run:
-        description: "Discover only; do not publish or write feeds"
+        description: Discover only without publishing or writing feeds
         required: false
         type: boolean
         default: false
       skip_feeds:
-        description: "Only publish Emby release; do not update repo.xml"
+        description: Only publish Emby release without updating repo.xml
         required: false
         type: boolean
         default: false
       accelerate_preset:
-        description: "Feed URL GitHub accelerate preset (none/ghproxy/ghfast/...; none = config.json)"
+        description: Feed URL GitHub accelerate preset (none means use config.json)
         required: false
         type: string
-        default: "none"
+        default: none
 
 permissions:
   contents: write
@@ -107,4 +107,3 @@ jobs:
         uses: ./.github/actions/update-feeds
         with:
           accelerate_preset: ${{ inputs.accelerate_preset }}
-          commit_message: chore update repo feeds after Emby sync

@@ -1,45 +1,45 @@
 name: Sync QNAP Repository
 
-on:
+"on":
   schedule:
     # UTC 19:30 ≈ Asia/Shanghai 03:30
     - cron: "30 19 * * *"
   workflow_dispatch:
     inputs:
       version:
-        description: "Emby only: process this upstream version (empty = latest non-prerelease)"
+        description: Emby only process this upstream version (empty means latest non-prerelease)
         required: false
         type: string
       allow_prerelease:
-        description: "Emby only: allow upstream pre-release packages"
+        description: Emby only allow upstream pre-release packages
         required: false
         type: boolean
         default: false
       skip_build:
-        description: "Skip package sync; only regenerate repo.xml / repo_pre.xml"
+        description: Skip package sync and only regenerate repo.xml
         required: false
         type: boolean
         default: false
       skip_emby:
-        description: "Skip Emby sync job"
+        description: Skip Emby sync job
         required: false
         type: boolean
         default: false
       skip_tailscale:
-        description: "Skip Tailscale sync job"
+        description: Skip Tailscale sync job
         required: false
         type: boolean
         default: false
       dry_run:
-        description: "Discover only; do not publish releases or write feeds"
+        description: Discover only without publishing releases or writing feeds
         required: false
         type: boolean
         default: false
       accelerate_preset:
-        description: "Feed URL GitHub accelerate preset (none/ghproxy/ghfast/...; none = config.json)"
+        description: Feed URL GitHub accelerate preset (none means use config.json)
         required: false
         type: string
-        default: "none"
+        default: none
 
 permissions:
   contents: write
@@ -158,4 +158,3 @@ jobs:
         uses: ./.github/actions/update-feeds
         with:
           accelerate_preset: ${{ inputs.accelerate_preset }}
-          commit_message: chore update repo feeds
