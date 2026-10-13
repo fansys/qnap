@@ -41,10 +41,8 @@ runs:
         GITHUB_TOKEN: ${{ github.token }}
         GITHUB_REPOSITORY: ${{ github.repository }}
         INPUT_ACCELERATE_PRESET: ${{ inputs.accelerate_preset }}
-        # Repository Variables must be mapped explicitly to become process env.
-        FEED_ACCELERATE_PREFIX: ${{ vars.FEED_ACCELERATE_PREFIX }}
-        FEED_ACCELERATE_PRESET: ${{ vars.FEED_ACCELERATE_PRESET }}
-        FEED_ACCELERATE_ENABLED: ${{ vars.FEED_ACCELERATE_ENABLED }}
+        # FEED_ACCELERATE_* come from the caller workflow step env
+        # (composite actions cannot use the vars context).
       run: |
         set -euo pipefail
         mkdir -p out

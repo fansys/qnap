@@ -69,6 +69,8 @@ GitHub Actions：**Settings → Variables** 配置：
 - `FEED_ACCELERATE_PRESET`：可选，如 `ghfast`（PREFIX 未设时生效）
 - `FEED_ACCELERATE_ENABLED`：可选
 
+这些 Variable 由 workflow 在调用 `update-feeds` 时注入为环境变量（composite action 内不能直接写 `vars.*`）。
+
 手动参数 `accelerate_preset` 默认就是 `env`。
 
 新增软件源应用：实现 `FeedProvider` 并在 `config.json` → `feed.providers` 注册名称（见 `ci/providers.py`）。

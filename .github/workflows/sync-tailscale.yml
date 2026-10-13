@@ -101,3 +101,7 @@ jobs:
         uses: ./.github/actions/update-feeds
         with:
           accelerate_preset: ${{ inputs.accelerate_preset }}
+        env:
+          FEED_ACCELERATE_PREFIX: ${{ vars.FEED_ACCELERATE_PREFIX }}
+          FEED_ACCELERATE_PRESET: ${{ vars.FEED_ACCELERATE_PRESET }}
+          FEED_ACCELERATE_ENABLED: ${{ vars.FEED_ACCELERATE_ENABLED }}
