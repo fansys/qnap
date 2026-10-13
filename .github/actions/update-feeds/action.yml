@@ -3,13 +3,13 @@ description: Merge signature fragments, write repo.xml / repo_pre.xml, and commi
 
 inputs:
   accelerate_preset:
-    description: Feed URL GitHub accelerate preset (empty = config.json)
+    description: Feed URL GitHub accelerate preset (empty uses config.json)
     required: false
-    default: ""
+    default: "none"
   commit_message:
     description: Git commit message when feeds change
     required: false
-    default: "chore: update repo feeds"
+    default: chore update repo feeds
   python_version:
     description: Python version
     required: false
@@ -53,13 +53,15 @@ runs:
           cp artifacts/signatures-tailscale/signatures-tailscale.json out/signatures-tailscale.json
           args+=(--signatures-in out/signatures-tailscale.json)
         fi
-        if [ -n "${INPUT_ACCELERATE_PRESET:-}" ]; then
+        if [ -n "${INPUT_ACCELERATE_PRESET:-}" ] && [ "${INPUT_ACCELERATE_PRESET}" != "none" ]; then
           args+=(--accelerate-preset "${INPUT_ACCELERATE_PRESET}")
         fi
         python3 sync_release.py "${args[@]}"
 
     - name: Commit feed products
       shell: bash
+      env:
+        COMMIT_MESSAGE: ${{ inputs.commit_message }}
       run: |
         set -euo pipefail
         git config user.name "github-actions[bot]"
@@ -68,6 +70,6 @@ runs:
         if git diff --staged --quiet; then
           echo "No feed product changes to commit"
         else
-          git commit -m "${{ inputs.commit_message }}"
+          git commit -m "${COMMIT_MESSAGE}"
           git push
         fi

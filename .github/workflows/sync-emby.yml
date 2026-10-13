@@ -23,10 +23,10 @@ on:
         type: boolean
         default: false
       accelerate_preset:
-        description: "Feed URL GitHub accelerate preset (none/ghproxy/ghfast/...; empty = config.json)"
+        description: "Feed URL GitHub accelerate preset (none/ghproxy/ghfast/...; none = config.json)"
         required: false
         type: string
-        default: ""
+        default: "none"
 
 permissions:
   contents: write
@@ -107,4 +107,4 @@ jobs:
         uses: ./.github/actions/update-feeds
         with:
           accelerate_preset: ${{ inputs.accelerate_preset }}
-          commit_message: "chore: update repo feeds after Emby sync"
+          commit_message: chore update repo feeds after Emby sync
