@@ -71,6 +71,11 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common(emby)
     emby.add_argument("--version", help="process only this Emby upstream version")
     emby.add_argument("--allow-prerelease", action="store_true")
+    emby.add_argument(
+        "--force",
+        action="store_true",
+        help="rebuild and re-upload even if release tag already exists",
+    )
     emby.add_argument("--sign-cert", type=Path, default=DEFAULT_CERT)
     emby.add_argument("--sign-key", type=Path, default=DEFAULT_KEY)
     emby.add_argument("--seven-zip", default=shutil.which("7z") or "7z")
@@ -119,6 +124,11 @@ def build_parser() -> argparse.ArgumentParser:
     all_cmd.add_argument("--skip-emby", action="store_true")
     all_cmd.add_argument("--skip-tailscale", action="store_true")
     all_cmd.add_argument(
+        "--force",
+        action="store_true",
+        help="force Emby and Tailscale release asset refresh",
+    )
+    all_cmd.add_argument(
         "--tailscale-version",
         help="Tailscale product version for all/tailscale (empty = current stable)",
     )
@@ -152,6 +162,7 @@ def _run_emby(args: argparse.Namespace) -> int:
         version=args.version,
         allow_prerelease=args.allow_prerelease,
         dry_run=args.dry_run,
+        force=getattr(args, "force", False),
         signatures_out=args.signatures_out,
     )
     return 0
@@ -212,6 +223,7 @@ def _run_all(args: argparse.Namespace) -> int:
                 **shared,
                 version=args.version,
                 allow_prerelease=args.allow_prerelease,
+                force=args.force,
                 sign_cert=args.sign_cert,
                 sign_key=args.sign_key,
                 seven_zip=args.seven_zip,
@@ -223,7 +235,7 @@ def _run_all(args: argparse.Namespace) -> int:
             argparse.Namespace(
                 **shared,
                 version=args.tailscale_version,
-                force=False,
+                force=args.force,
                 signatures_out=SIGNATURES_TAILSCALE_FRAGMENT,
             )
         )

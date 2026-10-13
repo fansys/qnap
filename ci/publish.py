@@ -34,3 +34,35 @@ def create_github_release(repo: str, release: ReleaseInfo, package: Path) -> Non
     if release.prerelease:
         command.append("--prerelease")
     subprocess.run(command, check=True)
+
+
+def upload_release_asset(repo: str, tag: str, package: Path) -> None:
+    """Replace an asset on an existing release tag."""
+    subprocess.run(
+        [
+            "gh",
+            "release",
+            "upload",
+            tag,
+            str(package),
+            "--repo",
+            repo,
+            "--clobber",
+        ],
+        check=True,
+    )
+
+
+def publish_emby_package(
+    repo: str,
+    release: ReleaseInfo,
+    package: Path,
+    *,
+    force: bool = False,
+    tag_exists: bool = False,
+) -> None:
+    tag = emby_release_tag(release.version)
+    if tag_exists and force:
+        upload_release_asset(repo, tag, package)
+        return
+    create_github_release(repo, release, package)

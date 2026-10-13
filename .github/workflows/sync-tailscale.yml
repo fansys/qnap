@@ -8,7 +8,7 @@ name: Sync Tailscale (manual)
         required: false
         type: string
       force:
-        description: Re-upload assets even if release tag already exists
+        description: Force re-upload even if release tag already exists
         required: false
         type: boolean
         default: false

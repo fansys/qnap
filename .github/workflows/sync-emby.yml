@@ -12,6 +12,11 @@ name: Sync Emby (manual)
         required: false
         type: boolean
         default: false
+      force:
+        description: Rebuild and re-upload even if release tag already exists
+        required: false
+        type: boolean
+        default: false
       dry_run:
         description: Discover only without publishing or writing feeds
         required: false
@@ -70,6 +75,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           INPUT_VERSION: ${{ inputs.version }}
           INPUT_ALLOW_PRERELEASE: ${{ inputs.allow_prerelease }}
+          INPUT_FORCE: ${{ inputs.force }}
           INPUT_DRY_RUN: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
@@ -79,6 +85,9 @@ jobs:
           fi
           if [ "${INPUT_ALLOW_PRERELEASE:-false}" = "true" ]; then
             args+=(--allow-prerelease)
+          fi
+          if [ "${INPUT_FORCE:-false}" = "true" ]; then
+            args+=(--force)
           fi
           if [ "${INPUT_DRY_RUN:-false}" = "true" ]; then
             args+=(--dry-run)

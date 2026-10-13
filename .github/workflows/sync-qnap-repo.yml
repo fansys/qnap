@@ -35,6 +35,16 @@ name: Sync QNAP Repository
         required: false
         type: boolean
         default: false
+      force_emby:
+        description: Force rebuild and re-upload Emby release even if tag exists
+        required: false
+        type: boolean
+        default: false
+      force_tailscale:
+        description: Force re-upload Tailscale release even if tag exists
+        required: false
+        type: boolean
+        default: false
       accelerate_preset:
         description: Feed URL GitHub accelerate preset (none means use config.json)
         required: false
@@ -84,6 +94,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           INPUT_VERSION: ${{ inputs.version }}
           INPUT_ALLOW_PRERELEASE: ${{ inputs.allow_prerelease }}
+          INPUT_FORCE: ${{ inputs.force_emby }}
           INPUT_DRY_RUN: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
@@ -93,6 +104,9 @@ jobs:
           fi
           if [ "${INPUT_ALLOW_PRERELEASE:-false}" = "true" ]; then
             args+=(--allow-prerelease)
+          fi
+          if [ "${INPUT_FORCE:-false}" = "true" ]; then
+            args+=(--force)
           fi
           if [ "${INPUT_DRY_RUN:-false}" = "true" ]; then
             args+=(--dry-run)
@@ -127,10 +141,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
+          INPUT_FORCE: ${{ inputs.force_tailscale }}
           INPUT_DRY_RUN: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
           args=(tailscale --repo "${GITHUB_REPOSITORY}" --ref "${GITHUB_REF_NAME}")
+          if [ "${INPUT_FORCE:-false}" = "true" ]; then
+            args+=(--force)
+          fi
           if [ "${INPUT_DRY_RUN:-false}" = "true" ]; then
             args+=(--dry-run)
           fi
