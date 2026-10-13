@@ -66,6 +66,8 @@ jobs:
     name: Sync Emby
     if: ${{ inputs.skip_build != true && inputs.skip_emby != true }}
     runs-on: ubuntu-latest
+    outputs:
+      released: ${{ steps.sync.outputs.released }}
     steps:
       - uses: actions/checkout@v4
 
@@ -89,6 +91,7 @@ jobs:
           gh --version
 
       - name: Sync Emby packages
+        id: sync
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
@@ -98,6 +101,7 @@ jobs:
           INPUT_DRY_RUN: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
+          echo "released=false" >> "$GITHUB_OUTPUT"
           args=(emby --repo "${GITHUB_REPOSITORY}" --ref "${GITHUB_REF_NAME}")
           if [ -n "${INPUT_VERSION:-}" ]; then
             args+=(--version "${INPUT_VERSION}")
@@ -114,7 +118,7 @@ jobs:
           python3 sync_release.py "${args[@]}"
 
       - name: Upload Emby signature fragment
-        if: ${{ inputs.dry_run != true }}
+        if: ${{ inputs.dry_run != true && steps.sync.outputs.released == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: signatures-emby
@@ -125,6 +129,8 @@ jobs:
     name: Sync Tailscale
     if: ${{ inputs.skip_build != true && inputs.skip_tailscale != true }}
     runs-on: ubuntu-latest
+    outputs:
+      released: ${{ steps.sync.outputs.released }}
     steps:
       - uses: actions/checkout@v4
 
@@ -138,6 +144,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Sync Tailscale packages
+        id: sync
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
@@ -145,6 +152,7 @@ jobs:
           INPUT_DRY_RUN: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
+          echo "released=false" >> "$GITHUB_OUTPUT"
           args=(tailscale --repo "${GITHUB_REPOSITORY}" --ref "${GITHUB_REF_NAME}")
           if [ "${INPUT_FORCE:-false}" = "true" ]; then
             args+=(--force)
@@ -155,7 +163,7 @@ jobs:
           python3 sync_release.py "${args[@]}"
 
       - name: Upload Tailscale signature fragment
-        if: ${{ inputs.dry_run != true }}
+        if: ${{ inputs.dry_run != true && steps.sync.outputs.released == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: signatures-tailscale
@@ -165,7 +173,9 @@ jobs:
   feeds:
     name: Update repo feeds
     needs: [emby, tailscale]
-    if: ${{ always() && !cancelled() && inputs.dry_run != true && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
+    # Update when skip_build, or when any sync job actually published/refreshed a release.
+    # Do not require both jobs to succeed: one release is enough.
+    if: ${{ always() && !cancelled() && inputs.dry_run != true && (inputs.skip_build == true || needs.emby.outputs.released == 'true' || needs.tailscale.outputs.released == 'true') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

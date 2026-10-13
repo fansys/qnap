@@ -8,6 +8,7 @@ from .discover import select_upstream
 from .github_client import release_tag_exists
 from .package_build import build_patched_package
 from .publish import publish_emby_package
+from .release_result import SyncResult, emit_released
 from .signatures import save_signature_cache
 from .tags import emby_release_tag
 from .upstream import fetch_releases
@@ -25,9 +26,10 @@ def sync_emby(
     dry_run: bool = False,
     force: bool = False,
     signatures_out: Path | None = None,
-) -> dict[str, str]:
-    """Publish missing (or force-refresh) Emby releases. Returns signature fragments."""
+) -> SyncResult:
+    """Publish missing (or force-refresh) Emby releases."""
     produced: dict[str, str] = {}
+    released = False
     upstream = select_upstream(
         fetch_releases(),
         version=version,
@@ -61,6 +63,8 @@ def sync_emby(
             force=force,
             tag_exists=exists,
         )
+        released = True
     if signatures_out is not None:
         save_signature_cache(produced, signatures_out)
-    return produced
+    emit_released(released)
+    return SyncResult(signatures=produced, released=released)

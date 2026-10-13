@@ -47,6 +47,8 @@ jobs:
   emby:
     name: Sync Emby
     runs-on: ubuntu-latest
+    outputs:
+      released: ${{ steps.sync.outputs.released }}
     steps:
       - uses: actions/checkout@v4
 
@@ -70,6 +72,7 @@ jobs:
           gh --version
 
       - name: Sync Emby packages
+        id: sync
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
@@ -79,6 +82,7 @@ jobs:
           INPUT_DRY_RUN: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
+          echo "released=false" >> "$GITHUB_OUTPUT"
           args=(emby --repo "${GITHUB_REPOSITORY}" --ref "${GITHUB_REF_NAME}")
           if [ -n "${INPUT_VERSION:-}" ]; then
             args+=(--version "${INPUT_VERSION}")
@@ -95,7 +99,7 @@ jobs:
           python3 sync_release.py "${args[@]}"
 
       - name: Upload Emby signature fragment
-        if: ${{ inputs.dry_run != true && inputs.skip_feeds != true }}
+        if: ${{ inputs.dry_run != true && inputs.skip_feeds != true && steps.sync.outputs.released == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: signatures-emby
@@ -105,7 +109,7 @@ jobs:
   feeds:
     name: Update repo feeds
     needs: [emby]
-    if: ${{ inputs.dry_run != true && inputs.skip_feeds != true }}
+    if: ${{ inputs.dry_run != true && inputs.skip_feeds != true && needs.emby.outputs.released == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

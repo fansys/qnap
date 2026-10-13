@@ -16,6 +16,7 @@ from .http_util import HttpError, download_file, head_ok, read_text
 from .own_releases import fetch_own_catalog
 from .paths import PACKAGE_DIR, ensure_out_dirs
 from .qpkg_sig import extract_repository_signature
+from .release_result import SyncResult, emit_released
 from .signatures import save_signature_cache
 from .tags import tailscale_release_tag
 from .upstream import GithubError
@@ -188,7 +189,7 @@ def sync_tailscale(
     dry_run: bool = False,
     signatures_out: Path | None = None,
     force: bool = False,
-) -> dict[str, str]:
+) -> SyncResult:
     """Ensure Tailscale QPKGs exist as a GitHub Release."""
     produced: dict[str, str] = {}
     resolved_version, packages = resolve_packages(version)
@@ -197,7 +198,8 @@ def sync_tailscale(
         print(f"skip existing Tailscale release tag: {tag}")
         if signatures_out is not None:
             save_signature_cache(produced, signatures_out)
-        return produced
+        emit_released(False)
+        return SyncResult(signatures=produced, released=False)
     if dry_run:
         print(
             f"dry-run: would download/publish Tailscale {resolved_version} "
@@ -205,7 +207,8 @@ def sync_tailscale(
         )
         if signatures_out is not None:
             save_signature_cache(produced, signatures_out)
-        return produced
+        emit_released(False)
+        return SyncResult(signatures=produced, released=False)
     paths = download_tailscale_packages(packages, version=resolved_version)
     for path in paths:
         match = VERSION_IN_NAME.fullmatch(path.name)
@@ -234,7 +237,8 @@ def sync_tailscale(
         create_tailscale_release(repo, resolved_version, paths)
     if signatures_out is not None:
         save_signature_cache(produced, signatures_out)
-    return produced
+    emit_released(True)
+    return SyncResult(signatures=produced, released=True)
 
 
 def list_tailscale_release(repo: str) -> dict[str, Any] | None:
