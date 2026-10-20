@@ -1,3 +1,10 @@
 {
-  "4.10.1.0": "u3ZzfLYuB7COZLjj+CdvP+GcvTMu0Q=="
+  "4.10.1.0": "u3ZzfLYuB7COZLjj+CdvP+GcvTMu0Q==",
+  "tailscale:1.104.2:arm-x19": "MFxy1sTW5NYud3/VHcekSWm2r53Pjmg=",
+  "tailscale:1.104.2:arm-x31": "MH4SbyEb+dZ3VOHvS5KufS3HA33/yF4=",
+  "tailscale:1.104.2:arm-x41": "kSAokHgQAADTkd/PHCDp+FF3nXDYO40=",
+  "tailscale:1.104.2:arm_64": "BExV0M5ijRSkxZkZaZLVFpgCDvyX7kk=",
+  "tailscale:1.104.2:x86": "GdKHKPK6nkDzss20UcK2pphRJ6YmSz0=",
+  "tailscale:1.104.2:x86_64": "UoGYYho4hgNvtZ/IaJc3fvhqs/1yRks=",
+  "tailscale:1.104.2:x86_ce53xx": "gJnGszE1WbtNbn55ZOS++q89z8UzI8A="
 }
