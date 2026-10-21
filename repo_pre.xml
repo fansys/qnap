@@ -1,31 +1,31 @@
 <?xml version='1.0' encoding='utf-8'?>
 <plugins>
-  <cachechk>202610202229</cachechk>
+  <cachechk>202610212236</cachechk>
   <item>
     <name>Emby Server</name>
     <internalName>EmbyServer</internalName>
-    <changeLog>https://github.com/fansys/qnap/releases/tag/emby-4.10.1.0</changeLog>
+    <changeLog>https://github.com/fansys/qnap/releases/tag/emby-4.10.2.0</changeLog>
     <category>Fansy</category>
     <type>Entertainment</type>
     <icon80>https://gh.fansy.life/https://raw.githubusercontent.com/fansys/qnap/master/assets/emby-icon.gif</icon80>
     <icon100>https://gh.fansy.life/https://raw.githubusercontent.com/fansys/qnap/master/assets/emby-icon.gif</icon100>
-    <description>Patched Emby QNAP x86_64 package for 4.10.1.0.
+    <description>Patched Emby QNAP x86_64 package for 4.10.2.0.
 
-Upstream: https://github.com/MediaBrowser/Emby.Releases/releases/tag/4.10.1.0
+Upstream: https://github.com/MediaBrowser/Emby.Releases/releases/tag/4.10.2.0
 
 Signed with the repository self-signed certificate for integrity only; this signature does not pass QNAP QoS trust verification.
 </description>
     <fwVersion>4.3.4</fwVersion>
-    <version>4.10.1.0</version>
+    <version>4.10.2.0</version>
     <platform>
       <platformID>TS-NASX86</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/emby-4.10.1.0/emby-server-qnap_4.10.1.0_x86_64_patched.qpkg</location>
-      <signature>u3ZzfLYuB7COZLjj+CdvP+GcvTMu0Q==</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/emby-4.10.2.0/emby-server-qnap_4.10.2.0_x86_64_patched.qpkg</location>
+      <signature>UBD6hck7uMX4KvZXC69l5VAOEJKItA==</signature>
     </platform>
-    <publishedDate>2026-10-13 11:10:06</publishedDate>
+    <publishedDate>2026-10-21 22:35:40</publishedDate>
     <maintainer>Emby QNAP Repository</maintainer>
     <developer>MediaBrowser</developer>
-    <forumLink>https://github.com/fansys/qnap/releases/tag/emby-4.10.1.0</forumLink>
+    <forumLink>https://github.com/fansys/qnap/releases/tag/emby-4.10.2.0</forumLink>
     <language>English</language>
     <snapshot />
     <bannerImg />
