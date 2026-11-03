@@ -14,5 +14,12 @@
   "tailscale:1.104.4:arm_64": "Xtb3OoiOVFPTCPPPq7MQ+Jdf4B/QbsM=",
   "tailscale:1.104.4:x86": "p01bnRdlTdt9O2rleoKl+LBO0P1RIbg=",
   "tailscale:1.104.4:x86_64": "D04voww41oHiSNi51am9ElljoBm6EqI=",
-  "tailscale:1.104.4:x86_ce53xx": "UEqcqvEgY1m0aYgAGygWwHRGG+BzzeE="
+  "tailscale:1.104.4:x86_ce53xx": "UEqcqvEgY1m0aYgAGygWwHRGG+BzzeE=",
+  "tailscale:1.104.5:arm-x19": "Zng5S/L+0M/aSvcEVf9xerkxMFbc2aQ=",
+  "tailscale:1.104.5:arm-x31": "nr8JCgG4/96yh/x3qULGqRRi4lQbNlc=",
+  "tailscale:1.104.5:arm-x41": "G1SHeGjZerQGA1WIp5b+kl6xoR9oK/I=",
+  "tailscale:1.104.5:arm_64": "Oa9nplHttuhdrcu3q74vxSMK8XDuWSM=",
+  "tailscale:1.104.5:x86": "5ZDtuNxGuEcb/ypeAsmK5gFP1/O5/o0=",
+  "tailscale:1.104.5:x86_64": "CLF5oP4Eemay41l900bds3tNsRgxisA=",
+  "tailscale:1.104.5:x86_ce53xx": "cPjWia3V+8HLCMzRZ+Vn9WZnxgq8w0E="
 }
