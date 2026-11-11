@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <plugins>
-  <cachechk>202611030142</cachechk>
+  <cachechk>202611110008</cachechk>
   <item>
     <name>Emby Server</name>
     <internalName>EmbyServer</internalName>
@@ -41,123 +41,123 @@ Signed with the repository self-signed certificate for integrity only; this sign
     <icon100>https://download.qnap.com/QPKG/images/QPKG_100/Tailscale_100.png</icon100>
     <description>Tailscale is a mesh VPN that makes it easy to connect your devices, wherever they are.</description>
     <fwVersion>4.3.4</fwVersion>
-    <version>1.104.5</version>
+    <version>1.104.6</version>
     <platform>
       <platformID>TS-NASX86</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.5/Tailscale_1.104.5-1_x86_64.qpkg</location>
-      <signature>CLF5oP4Eemay41l900bds3tNsRgxisA=</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.6/Tailscale_1.104.6-1_x86_64.qpkg</location>
+      <signature>dxUDSx62BJLHNFaV4l7IKnbF5EXuJxU=</signature>
     </platform>
     <platform>
       <platformID>TS-NASARM_64</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.5/Tailscale_1.104.5-1_arm_64.qpkg</location>
-      <signature>Oa9nplHttuhdrcu3q74vxSMK8XDuWSM=</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.6/Tailscale_1.104.6-1_arm_64.qpkg</location>
+      <signature>nDBCYtynP5ADkoMAcbC0mHtpzh2kCVI=</signature>
     </platform>
     <platform>
       <platformID>TS-X16</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.5/Tailscale_1.104.5-1_arm_64.qpkg</location>
-      <signature>Oa9nplHttuhdrcu3q74vxSMK8XDuWSM=</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.6/Tailscale_1.104.6-1_arm_64.qpkg</location>
+      <signature>nDBCYtynP5ADkoMAcbC0mHtpzh2kCVI=</signature>
     </platform>
     <platform>
       <platformID>TS-X28A</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.5/Tailscale_1.104.5-1_arm_64.qpkg</location>
-      <signature>Oa9nplHttuhdrcu3q74vxSMK8XDuWSM=</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.6/Tailscale_1.104.6-1_arm_64.qpkg</location>
+      <signature>nDBCYtynP5ADkoMAcbC0mHtpzh2kCVI=</signature>
     </platform>
     <platform>
       <platformID>TS-X32</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.5/Tailscale_1.104.5-1_arm_64.qpkg</location>
-      <signature>Oa9nplHttuhdrcu3q74vxSMK8XDuWSM=</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.6/Tailscale_1.104.6-1_arm_64.qpkg</location>
+      <signature>nDBCYtynP5ADkoMAcbC0mHtpzh2kCVI=</signature>
     </platform>
     <platform>
       <platformID>TS-X32U</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.5/Tailscale_1.104.5-1_arm_64.qpkg</location>
-      <signature>Oa9nplHttuhdrcu3q74vxSMK8XDuWSM=</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.6/Tailscale_1.104.6-1_arm_64.qpkg</location>
+      <signature>nDBCYtynP5ADkoMAcbC0mHtpzh2kCVI=</signature>
     </platform>
     <platform>
       <platformID>TS-X33</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.5/Tailscale_1.104.5-1_arm_64.qpkg</location>
-      <signature>Oa9nplHttuhdrcu3q74vxSMK8XDuWSM=</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.6/Tailscale_1.104.6-1_arm_64.qpkg</location>
+      <signature>nDBCYtynP5ADkoMAcbC0mHtpzh2kCVI=</signature>
     </platform>
     <platform>
       <platformID>TS-X33EU</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.5/Tailscale_1.104.5-1_arm_64.qpkg</location>
-      <signature>Oa9nplHttuhdrcu3q74vxSMK8XDuWSM=</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.6/Tailscale_1.104.6-1_arm_64.qpkg</location>
+      <signature>nDBCYtynP5ADkoMAcbC0mHtpzh2kCVI=</signature>
     </platform>
     <platform>
       <platformID>TS-X33U</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.5/Tailscale_1.104.5-1_arm_64.qpkg</location>
-      <signature>Oa9nplHttuhdrcu3q74vxSMK8XDuWSM=</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.6/Tailscale_1.104.6-1_arm_64.qpkg</location>
+      <signature>nDBCYtynP5ADkoMAcbC0mHtpzh2kCVI=</signature>
     </platform>
     <platform>
       <platformID>TS-X35</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.5/Tailscale_1.104.5-1_arm_64.qpkg</location>
-      <signature>Oa9nplHttuhdrcu3q74vxSMK8XDuWSM=</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.6/Tailscale_1.104.6-1_arm_64.qpkg</location>
+      <signature>nDBCYtynP5ADkoMAcbC0mHtpzh2kCVI=</signature>
     </platform>
     <platform>
       <platformID>TS-X35A</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.5/Tailscale_1.104.5-1_arm_64.qpkg</location>
-      <signature>Oa9nplHttuhdrcu3q74vxSMK8XDuWSM=</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.6/Tailscale_1.104.6-1_arm_64.qpkg</location>
+      <signature>nDBCYtynP5ADkoMAcbC0mHtpzh2kCVI=</signature>
     </platform>
     <platform>
       <platformID>TS-X35EU</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.5/Tailscale_1.104.5-1_arm_64.qpkg</location>
-      <signature>Oa9nplHttuhdrcu3q74vxSMK8XDuWSM=</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.6/Tailscale_1.104.6-1_arm_64.qpkg</location>
+      <signature>nDBCYtynP5ADkoMAcbC0mHtpzh2kCVI=</signature>
     </platform>
     <platform>
       <platformID>TS-X42</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.5/Tailscale_1.104.5-1_arm_64.qpkg</location>
-      <signature>Oa9nplHttuhdrcu3q74vxSMK8XDuWSM=</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.6/Tailscale_1.104.6-1_arm_64.qpkg</location>
+      <signature>nDBCYtynP5ADkoMAcbC0mHtpzh2kCVI=</signature>
     </platform>
     <platform>
       <platformID>TS-XA28A</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.5/Tailscale_1.104.5-1_arm_64.qpkg</location>
-      <signature>Oa9nplHttuhdrcu3q74vxSMK8XDuWSM=</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.6/Tailscale_1.104.6-1_arm_64.qpkg</location>
+      <signature>nDBCYtynP5ADkoMAcbC0mHtpzh2kCVI=</signature>
     </platform>
     <platform>
       <platformID>TS-X41</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.5/Tailscale_1.104.5-1_arm-x41.qpkg</location>
-      <signature>G1SHeGjZerQGA1WIp5b+kl6xoR9oK/I=</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.6/Tailscale_1.104.6-1_arm-x41.qpkg</location>
+      <signature>xdIRyyOfdUhyWmYqXyxwLCkHEW5UkSM=</signature>
     </platform>
     <platform>
       <platformID>TS-X31P2</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.5/Tailscale_1.104.5-1_arm-x41.qpkg</location>
-      <signature>G1SHeGjZerQGA1WIp5b+kl6xoR9oK/I=</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.6/Tailscale_1.104.6-1_arm-x41.qpkg</location>
+      <signature>xdIRyyOfdUhyWmYqXyxwLCkHEW5UkSM=</signature>
     </platform>
     <platform>
       <platformID>TS-X31P3</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.5/Tailscale_1.104.5-1_arm-x41.qpkg</location>
-      <signature>G1SHeGjZerQGA1WIp5b+kl6xoR9oK/I=</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.6/Tailscale_1.104.6-1_arm-x41.qpkg</location>
+      <signature>xdIRyyOfdUhyWmYqXyxwLCkHEW5UkSM=</signature>
     </platform>
     <platform>
       <platformID>TS-X31X</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.5/Tailscale_1.104.5-1_arm-x41.qpkg</location>
-      <signature>G1SHeGjZerQGA1WIp5b+kl6xoR9oK/I=</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.6/Tailscale_1.104.6-1_arm-x41.qpkg</location>
+      <signature>xdIRyyOfdUhyWmYqXyxwLCkHEW5UkSM=</signature>
     </platform>
     <platform>
       <platformID>TS-X31XU</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.5/Tailscale_1.104.5-1_arm-x41.qpkg</location>
-      <signature>G1SHeGjZerQGA1WIp5b+kl6xoR9oK/I=</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.6/Tailscale_1.104.6-1_arm-x41.qpkg</location>
+      <signature>xdIRyyOfdUhyWmYqXyxwLCkHEW5UkSM=</signature>
     </platform>
     <platform>
       <platformID>TS-531P</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.5/Tailscale_1.104.5-1_arm-x41.qpkg</location>
-      <signature>G1SHeGjZerQGA1WIp5b+kl6xoR9oK/I=</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.6/Tailscale_1.104.6-1_arm-x41.qpkg</location>
+      <signature>xdIRyyOfdUhyWmYqXyxwLCkHEW5UkSM=</signature>
     </platform>
     <platform>
       <platformID>TS-X31</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.5/Tailscale_1.104.5-1_arm-x31.qpkg</location>
-      <signature>nr8JCgG4/96yh/x3qULGqRRi4lQbNlc=</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.6/Tailscale_1.104.6-1_arm-x31.qpkg</location>
+      <signature>wDSxAt5y8xNkIiWzP9wInxXWd9uJEPc=</signature>
     </platform>
     <platform>
       <platformID>TS-ARM-X19</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.5/Tailscale_1.104.5-1_arm-x19.qpkg</location>
-      <signature>Zng5S/L+0M/aSvcEVf9xerkxMFbc2aQ=</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.6/Tailscale_1.104.6-1_arm-x19.qpkg</location>
+      <signature>S1YNYycGqMj3/iCCSCxVck8GYo/eCws=</signature>
     </platform>
     <platform>
       <platformID>OLD_X86</platformID>
-      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.5/Tailscale_1.104.5-1_x86.qpkg</location>
-      <signature>5ZDtuNxGuEcb/ypeAsmK5gFP1/O5/o0=</signature>
+      <location>https://gh.fansy.life/https://github.com/fansys/qnap/releases/download/tailscale-1.104.6/Tailscale_1.104.6-1_x86.qpkg</location>
+      <signature>aEidGilVy1RnH0ou7ZnuELbSwcGaCqI=</signature>
     </platform>
-    <publishedDate>2026-11-03 01:42:00</publishedDate>
+    <publishedDate>2026-11-11 00:07:58</publishedDate>
     <maintainer>Tailscale mirror</maintainer>
     <developer>Tailscale, Inc.</developer>
     <forumLink>https://tailscale.com/docs/integrations/qnap</forumLink>
